@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>خلية حروف</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #1d3b73, #020617);
+      color: #fff;
+      min-height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* نجوم الخلفية */
+    .star {
+      position: fixed;
+      background: white;
+      border-radius: 50%;
+      opacity: 0.8;
+      animation: twinkle 2s infinite ease-in-out;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.3); }
+    } /*[web:2][web:8]*/
+
+    .screen {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100vh;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 16px;
+      padding: 20px 22px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      color: #eff6ff;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #cbd5f5;
+      margin-bottom: 18px;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .shop-label {
+      font-size: 0.9rem;
+      color: #e5e7eb;
+    }
+
+    label {
+      display: block;
+      text-align: right;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      color: #e5e7eb;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid #4b5563;
+      background: rgba(15, 23, 42, 0.9);
+      color: #f9fafb;
+      margin-bottom: 14px;
+      font-size: 0.9rem;
+    }
+
+    input[type="text"]::placeholder {
+      color: #6b7280;
+    }
+
+    .btn {
+      padding: 9px 16px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+      color: #eff6ff;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.5);
+      width: 100%;
+      margin-top: 6px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(37, 99, 235, 0.6);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #e5e7eb;
+      border: 1px solid #4b5563;
+      margin-top: 8px;
+      width: 100%;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(31, 41, 55, 0.9);
+    }
+
+    /* شاشة اللعبة */
+    .game-container {
+      max-width: 600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .game-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .team-info {
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    .rounds {
+      font-size: 0.8rem;
+      color: #cbd5f5;
+    }
+
+    /* شبكة ٥×٥ متجاوبة */
+    .grid-wrapper {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(40px, 1fr));
+      gap: 6px;
+      width: 100%;
+      max-width: min(90vw, 480px);
+      margin-top: 6px;
+    } /*[web:12][web:15][web:18]*/
+
+    .cell {
+      position: relative;
+      width: 100%;
+      /* السداسي بالحجم المناسب لكل الأجهزة */
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1rem, 3vw, 1.4rem);
+      font-weight: 700;
+      cursor: pointer;
+      color: #e5e7eb;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid #4b5563;
+      clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%);
+    } /*[web:11][web:17]*/
+
+    .cell:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.6);
+    }
+
+    .cell.team1 {
+      background: rgba(59, 130, 246, 0.95);
+    }
+
+    .cell.team2 {
+      background: rgba(16, 185, 129, 0.95);
+    }
+
+    .bottom-bar {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .info-text {
+      font-size: 0.8rem;
+      color: #cbd5f5;
+      text-align: right;
+    }
+
+    /* نافذة اختيار الفريق (فريقين فقط) */
+    .team-select-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+    }
+
+    .team-select-modal.active {
+      display: flex;
+    }
+
+    .team-select-card {
+      background: #020617;
+      border-radius: 16px;
+      padding: 18px;
+      width: 90%;
+      max-width: 340px;
+      border: 1px solid #4b5563;
+      text-align: center;
+    }
+
+    .team-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .team-btn {
+      flex: 1;
+      min-width: 90px;
+      border-radius: 999px;
+      border: none;
+      padding: 7px 9px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    .team-btn.team1 {
+      background: #60a5fa;
+    }
+
+    .team-btn.team2 {
+      background: #34d399;
+    }
+
+    .team-btn:hover {
+      filter: brightness(1.05);
+    }
+
+    .cancel-btn {
+      margin-top: 8px;
+      background: transparent;
+      border: none;
+      color: #e5e7eb;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        padding: 16px 14px;
+      }
+      h1 {
+        font-size: 1.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- شاشة رئيسية -->
+  <div id="homeScreen" class="screen active">
+    <div class="card">
+      <div class="header-row">
+        <div></div>
+        <div class="shop-label">The three shop</div>
+      </div>
+      <h1>خلية حروف</h1>
+      <p class="subtitle">لعبة كلمات في شبكة ٥ × ٥ بين فريقين.</p>
+
+      <label for="team1Name">اسم الفريق 1:</label>
+      <input id="team1Name" type="text" placeholder="مثال: فريق النجوم" />
+
+      <label for="team2Name">اسم الفريق 2:</label>
+      <input id="team2Name" type="text" placeholder="مثال: فرسان الحروف" />
+
+      <button id="startBtn" class="btn btn-primary">العب</button>
+    </div>
+  </div>
+
+  <!-- شاشة اللعبة -->
+  <div id="gameScreen" class="screen">
+    <div class="game-container">
+      <div class="game-header">
+        <div class="game-title">خلية ٥ × ٥ (كلمات مخفية)</div>
+        <div class="team-info">
+          <div id="displayTeams"></div>
+          <div class="rounds" id="roundInfo"></div>
+        </div>
+      </div>
+
+      <div class="grid-wrapper">
+        <div id="grid" class="grid"></div>
+      </div>
+
+      <div class="bottom-bar">
+        <p class="info-text">
+          اختر خلية تحتوي حرف من الكلمة، ثم حدد الفريق الذي جاوب لتلوين الخلية بلونه. لكل فريق ٥ جولات.
+        </p>
+        <button id="backBtn" class="btn btn-secondary">رجوع للصفحة الرئيسية</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة اختيار الفريق (فريقين) -->
+  <div id="teamModal" class="team-select-modal">
+    <div class="team-select-card">
+      <h2 style="margin-bottom: 6px; font-size: 1.05rem;">اختيار الفريق</h2>
+      <p style="font-size: 0.8rem; color: #cbd5f5;">
+        اختر الفريق الذي أجاب على الحرف في هذه الخلية.
+      </p>
+      <div class="team-buttons">
+        <button class="team-btn team1" data-team="1">فريق 1</button>
+        <button class="team-btn team2" data-team="2">فريق 2</button>
+      </div>
+      <button id="cancelTeam" class="cancel-btn">إلغاء</button>
+    </div>
+  </div>
+
+  <script>
+    // نجوم الخلفية
+    function createStars() {
+      const numberOfStars = 80;
+      for (let i = 0; i < numberOfStars; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        const size = Math.random() * 2 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        star.style.left = Math.random() * 100 + 'vw';
+        star.style.top = Math.random() * 100 + 'vh';
+        star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+        document.body.appendChild(star);
+      }
+    }
+    createStars(); /*[web:2]*/
+
+    const homeScreen = document.getElementById('homeScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const startBtn = document.getElementById('startBtn');
+    const backBtn = document.getElementById('backBtn');
+    const team1NameInput = document.getElementById('team1Name');
+    const team2NameInput = document.getElementById('team2Name');
+    const displayTeams = document.getElementById('displayTeams');
+    const roundInfo = document.getElementById('roundInfo');
+    const gridElement = document.getElementById('grid');
+
+    const teamModal = document.getElementById('teamModal');
+    const cancelTeam = document.getElementById('cancelTeam');
+    const teamButtons = document.querySelectorAll('.team-btn');
+
+    let selectedCell = null;
+    const maxRoundsPerTeam = 5;
+    const teamRounds = {
+      1: maxRoundsPerTeam,
+      2: maxRoundsPerTeam
+    }; /*[web:7]*/
+
+    const arabicLetters = 'ابتثجحخدذرزسشصضطظعغفقكلمنهوي';
+
+    function randomLetter() {
+      const idx = Math.floor(Math.random() * arabicLetters.length);
+      return arabicLetters[idx];
+    }
+
+    function resetTeamRounds() {
+      teamRounds[1] = maxRoundsPerTeam;
+      teamRounds[2] = maxRoundsPerTeam;
+    }
+
+    function updateRoundInfo() {
+      roundInfo.textContent =
+        'جولات ' + (team1NameInput.value || 'فريق 1') + ': ' + teamRounds[1] +
+        ' | ' +
+        'جولات ' + (team2NameInput.value || 'فريق 2') + ': ' + teamRounds[2];
+    }
+
+    // وضع كلمات محددة في الشبكة ٥×٥
+    // مثال بسيط:
+    // صف 2: كلمة "بيت" أفقية من اليمين لليسار
+    // قطر من أعلى يمين: كلمة "مدرسة" (قدر الإمكان داخل ٥×٥)
+    function generateWordGrid() {
+      // نبدأ بمصفوفة ٥×٥ مليانة حروف عشوائية
+      const grid = Array.from({ length: 5 }, () =>
+        Array.from({ length: 5 }, () => randomLetter())
+      ); /*[web:13][web:19]*/
+
+      // مثال كلمة "بيت" أفقية في الصف 1 (index 1)
+      const word1 = ['ب', 'ي', 'ت'];
+      const row1 = 1;
+      let col1 = 4; // نكتب من اليمين لليسار
+      for (let i = 0; i < word1.length; i++) {
+        grid[row1][col1 - i] = word1[i];
+      }
+
+      // مثال كلمة "علم" قطرية من أعلى يمين إلى أسفل يسار
+      const word2 = ['ع', 'ل', 'م'];
+      let r = 0;
+      let c = 4;
+      for (let i = 0; i < word2.length; i++) {
+        if (r < 5 && c >= 0) {
+          grid[r][c] = word2[i];
+        }
+        r += 1;
+        c -= 1;
+      }
+
+      return grid;
+    }
+
+    function renderGrid() {
+      gridElement.innerHTML = '';
+      const gridData = generateWordGrid();
+      let index = 0;
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.dataset.index = index;
+          cell.textContent = gridData[r][c];
+          cell.addEventListener('click', () => onCellClick(cell));
+          gridElement.appendChild(cell);
+          index++;
+        }
+      }
+    }
+
+    function allCellsColored() {
+      return Array.from(document.querySelectorAll('.cell'))
+        .every(c => c.classList.contains('team1') ||
+                    c.classList.contains('team2'));
+    }
+
+    function onCellClick(cell) {
+      selectedCell = cell;
+      teamModal.classList.add('active');
+    }
+
+    teamButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const teamId = btn.dataset.team;
+        if (!selectedCell) return;
+
+        if (teamRounds[teamId] <= 0) {
+          alert('انتهت جولات هذا الفريق.');
+          return;
+        }
+
+        selectedCell.classList.remove('team1', 'team2');
+        selectedCell.classList.add('team' + teamId);
+
+        teamRounds[teamId] -= 1;
+        updateRoundInfo();
+
+        teamModal.classList.remove('active');
+        selectedCell = null;
+
+        if (allCellsColored()) {
+          alert('اكتملت الخلية! سيتم إنشاء خلية جديدة بكلمات جديدة.');
+          resetTeamRounds();
+          updateRoundInfo();
+          renderGrid();
+        }
+      });
+    });
+
+    cancelTeam.addEventListener('click', () => {
+      teamModal.classList.remove('active');
+      selectedCell = null;
+    });
+
+    startBtn.addEventListener('click', () => {
+      const t1 = team1NameInput.value.trim() || 'فريق 1';
+      const t2 = team2NameInput.value.trim() || 'فريق 2';
+      displayTeams.textContent = t1 + ' vs ' + t2;
+
+      resetTeamRounds();
+      updateRoundInfo();
+      renderGrid();
+      homeScreen.classList.remove('active');
+      gameScreen.classList.add('active');
+    });
+
+    backBtn.addEventListener('click', () => {
+      gameScreen.classList.remove('active');
+      homeScreen.classList.add('active');
+    });
+  </script>
+</body>
+</html>
